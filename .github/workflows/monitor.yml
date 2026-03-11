@@ -27,6 +27,14 @@ jobs:
       - name: Set PYTHONPATH
         run: echo "PYTHONPATH=$GITHUB_WORKSPACE" >> $GITHUB_ENV
 
+      - name: Initialize data files
+        run: |
+          mkdir -p data
+          [ -f data/price_history.json ] || echo "[]" > data/price_history.json
+          [ -f data/ticketmaster_state.json ] || echo "{}" > data/ticketmaster_state.json
+          mkdir -p src/dashboard
+          [ -f src/dashboard/data.js ] || echo "window.PRICE_DATA = {};" > src/dashboard/data.js
+
       - name: Run price monitor
         env:
           GMAIL_SENDER: ${{ secrets.GMAIL_SENDER }}
@@ -45,7 +53,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/price_history.json data/ticketmaster_state.json src/dashboard/data.js
+          git add --ignore-unmatch data/price_history.json data/ticketmaster_state.json src/dashboard/data.js
           git diff --cached --quiet || \
             git commit -m "chore: price check $(date -u '+%Y-%m-%d %H:%M') UTC [skip ci]"
           git push
