@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tennis Ticket Monitor</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d1f13;
+      --surface:   #152d1c;
+      --surface-2: #1e3d27;
+      --surface-3: #243f2c;
+      --accent:    #4caf6f;
+      --accent-d:  #3a9959;
+      --text:      #f0f7f1;
+      --muted:     #8db89a;
+      --border:    #2a4a34;
+      --tp:        #52b788;
+      --sg:        #f4a261;
+      --tm:        #e76f51;
+    }
+
+    body { background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; min-height: 100vh; }
+
+    header {
+      background: var(--surface);
+      border-bottom: 2px solid var(--accent);
+      padding: 1.1rem 1.5rem;
+      display: flex; align-items: center; gap: 1rem;
+    }
+    header .logo { font-size: 1.6rem; }
+    header h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: .02em; }
+    header p  { font-size: .8rem; color: var(--muted); margin-top: .15rem; }
+
+    .stat-bar {
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+      padding: .5rem 1.5rem;
+      font-size: .8rem; color: var(--muted);
+      display: flex; gap: 1.5rem; flex-wrap: wrap;
+    }
+    .stat-bar strong { color: var(--accent); }
+
+    main { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+
+    .tabs { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+    .tab-btn {
+      padding: .55rem 1.2rem;
+      border: 1.5px solid var(--border); border-radius: 6px;
+      background: var(--surface); color: var(--muted);
+      font-size: .9rem; font-weight: 600; cursor: pointer;
+      transition: background .15s, color .15s, border-color .15s;
+    }
+    .tab-btn:hover  { background: var(--surface-3); color: var(--text); }
+    .tab-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .chart-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.25rem 1.25rem 1rem; margin-bottom: 1.75rem;
+    }
+    .chart-card h2 {
+      font-size: 1rem; font-weight: 600; color: var(--muted);
+      margin-bottom: 1rem; text-transform: uppercase; letter-spacing: .06em;
+    }
+    .chart-wrap  { position: relative; height: 280px; }
+    .chart-empty { height: 280px; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: .9rem; }
+
+    .deals-header {
+      display: flex; align-items: baseline; justify-content: space-between; margin-bottom: .75rem;
+    }
+    .deals-header h2  { font-size: 1.05rem; font-weight: 700; }
+    .deals-header small { font-size: .78rem; color: var(--muted); }
+
+    .table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+    thead th {
+      background: var(--surface-2); padding: .65rem 1rem;
+      text-align: left; font-size: .78rem;
+      text-transform: uppercase; letter-spacing: .07em;
+      color: var(--muted); border-bottom: 1px solid var(--border);
+    }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface-2); }
+    tbody td { padding: .7rem 1rem; font-size: .9rem; vertical-align: middle; }
+    tbody tr:nth-child(even) td { background: var(--surface); }
+
+    .price { font-weight: 700; font-size: 1rem; color: var(--accent); }
+
+    .platform-badge {
+      display: inline-block; padding: .2rem .55rem;
+      border-radius: 4px; font-size: .75rem; font-weight: 600;
+    }
+    .platform-tickpick     { background: #52b78822; color: var(--tp); border: 1px solid var(--tp); }
+    .platform-seatgeek     { background: #f4a26122; color: var(--sg); border: 1px solid var(--sg); }
+    .platform-ticketmaster { background: #e76f5122; color: var(--tm); border: 1px solid var(--tm); }
+
+    .buy-btn {
+      display: inline-block; padding: .3rem .8rem;
+      background: var(--accent); color: #fff;
+      border-radius: 5px; text-decoration: none; font-size: .82rem; font-weight: 700;
+      transition: background .15s;
+    }
+    .buy-btn:hover { background: var(--accent-d); }
+
+    .no-data {
+      padding: 2.5rem 1rem; text-align: center; color: var(--muted);
+      background: var(--surface); border-radius: 10px; border: 1px solid var(--border);
+      font-size: .95rem;
+    }
+
+    @media (max-width: 600px) {
+      header { flex-wrap: wrap; }
+      .chart-wrap { height: 220px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="logo">&#127934;</span>
+  <div>
+    <h1>Tennis Ticket Monitor</h1>
+    <p>US Open 2026 &mdash; live price tracking</p>
+  </div>
+</header>
+
+<div class="stat-bar" id="stat-bar"></div>
+
+<main>
+  <div class="tabs"   id="tabs"></div>
+  <div id="panels"></div>
+</main>
+
+<script src="data.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  const PLATFORM = {
+    tickpick:     { label: 'TickPick',     color: '#52b788', bg: '#52b78833' },
+    seatgeek:     { label: 'SeatGeek',     color: '#f4a261', bg: '#f4a26133' },
+    ticketmaster: { label: 'Ticketmaster', color: '#e76f51', bg: '#e76f5133' },
+  };
+
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function fmtTabLabel(key) {
+    const [dateStr, session] = key.split('|');
+    const d   = new Date(dateStr + 'T12:00:00Z');
+    const mon = d.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' });
+    const day = d.getUTCDate();
+    const s   = session.charAt(0).toUpperCase() + session.slice(1);
+    return mon + ' ' + day + ' &middot; ' + s;
+  }
+
+  function fmtTs(iso) {
+    const d = new Date(iso);
+    return d.toLocaleString('en-US', {
+      month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit', hour12: false,
+    });
+  }
+
+  function getLatestDeals(records) {
+    if (!records || records.length === 0) return [];
+    const maxTs = records.reduce((m, r) => (r.checked_at > m ? r.checked_at : m), '');
+    return records
+      .filter(r => r.checked_at === maxTs)
+      .sort((a, b) => a.price - b.price);
+  }
+
+  /* Chart */
+  const _charts = {};
+
+  function initChart(canvasId, chartSeries) {
+    if (_charts[canvasId]) return;
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+
+    const allTs = [...new Set(
+      Object.values(chartSeries).flat().map(p => p.x)
+    )].sort();
+    const labels = allTs.map(fmtTs);
+
+    const datasets = Object.entries(chartSeries).map(([platform, pts]) => {
+      const map = Object.fromEntries(pts.map(p => [p.x, p.y]));
+      const cfg = PLATFORM[platform] || { label: platform, color: '#aaa', bg: '#aaa3' };
+      return {
+        label: cfg.label,
+        data: allTs.map(ts => (ts in map ? map[ts] : null)),
+        borderColor: cfg.color,
+        backgroundColor: cfg.bg,
+        pointBackgroundColor: cfg.color,
+        tension: 0.3,
+        spanGaps: true,
+        pointRadius: 4,
+        pointHoverRadius: 7,
+        borderWidth: 2,
+      };
+    });
+
+    _charts[canvasId] = new Chart(canvas, {
+      type: 'line',
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { labels: { color: '#f0f7f1', font: { size: 12 }, boxWidth: 14 } },
+          tooltip: {
+            backgroundColor: '#1e3d27', borderColor: '#2a4a34', borderWidth: 1,
+            callbacks: {
+              label: ctx => ' ' + ctx.dataset.label + ': $' +
+                (ctx.parsed.y != null ? ctx.parsed.y.toFixed(0) : 'N/A'),
+            },
+          },
+        },
+        scales: {
+          x: {
+            ticks: { color: '#8db89a', maxTicksLimit: 8, font: { size: 11 } },
+            grid:  { color: '#2a4a3460' },
+          },
+          y: {
+            beginAtZero: false,
+            ticks: { color: '#8db89a', font: { size: 11 }, callback: v => '$' + v },
+            grid:  { color: '#2a4a3460' },
+          },
+        },
+      },
+    });
+  }
+
+  /* Deals table */
+  function buildDealsTable(deals) {
+    if (deals.length === 0) {
+      return '<div class="no-data">No listings for the most recent run yet.</div>';
+    }
+    var rows = deals.map(function (r) {
+      var cfg     = PLATFORM[r.platform] || { label: r.platform };
+      var section = r.section || '&mdash;';
+      var rowVal  = r.row     || '&mdash;';
+      var buyCell = r.listing_url
+        ? '<a class="buy-btn" href="' + escHtml(r.listing_url) + '" target="_blank" rel="noopener">Buy &rarr;</a>'
+        : '&mdash;';
+      return '<tr>' +
+        '<td>' + section + '</td>' +
+        '<td>' + rowVal  + '</td>' +
+        '<td><span class="price">$' + Number(r.price).toFixed(0) + '</span></td>' +
+        '<td>' + (r.quantity != null ? r.quantity : 1) + '</td>' +
+        '<td><span class="platform-badge platform-' + escHtml(r.platform) + '">' + cfg.label + '</span></td>' +
+        '<td>' + buyCell + '</td>' +
+        '</tr>';
+    }).join('');
+    return '<div class="table-wrap"><table>' +
+      '<thead><tr>' +
+      '<th>Section</th><th>Row</th><th>Price</th>' +
+      '<th>Qty</th><th>Platform</th><th>Buy</th>' +
+      '</tr></thead>' +
+      '<tbody>' + rows + '</tbody>' +
+      '</table></div>';
+  }
+
+  /* Panel HTML */
+  function buildPanel(key, sessionData) {
+    var safeKey  = key.replace(/\|/g, '-');
+    var canvasId = 'chart-' + safeKey;
+    var panelId  = 'panel-' + safeKey;
+    var hasChart = sessionData.chart && Object.keys(sessionData.chart).length > 0;
+    var chartHtml = hasChart
+      ? '<div class="chart-wrap"><canvas id="' + canvasId + '"></canvas></div>'
+      : '<div class="chart-empty">No history yet &mdash; data appears after the first monitor run.</div>';
+    var deals    = getLatestDeals(sessionData.records || []);
+    var latestTs = deals.length ? fmtTs(deals[0].checked_at) + ' UTC' : '';
+    return '<div class="panel" id="' + panelId + '" data-key="' + key + '" data-canvas="' + canvasId + '">' +
+      '<div class="chart-card">' +
+        '<h2>Price history &mdash; lowest per run</h2>' +
+        chartHtml +
+      '</div>' +
+      '<div class="deals-header">' +
+        '<h2>Best Current Deals</h2>' +
+        (latestTs ? '<small>Most recent run: ' + latestTs + '</small>' : '') +
+      '</div>' +
+      buildDealsTable(deals) +
+      '</div>';
+  }
+
+  /* Tab activation */
+  function activate(key) {
+    document.querySelectorAll('.tab-btn').forEach(function (b) {
+      b.classList.toggle('active', b.dataset.key === key);
+    });
+    document.querySelectorAll('.panel').forEach(function (p) {
+      var isActive = p.dataset.key === key;
+      p.classList.toggle('active', isActive);
+      if (isActive) {
+        var canvasId    = p.dataset.canvas;
+        var sessionData = (window.PRICE_DATA || {})[key] || {};
+        if (sessionData.chart) initChart(canvasId, sessionData.chart);
+      }
+    });
+  }
+
+  /* Boot */
+  (function init() {
+    var data = window.PRICE_DATA || {};
+    var meta = window.PRICE_META || {};
+    var keys = Object.keys(data).sort();
+
+    var statBar = document.getElementById('stat-bar');
+    var lastUp  = meta.last_updated ? fmtTs(meta.last_updated) + ' UTC' : 'never';
+    statBar.innerHTML =
+      '<span>Total records: <strong>' + (meta.total_records || 0) + '</strong></span>' +
+      '<span>Sessions tracked: <strong>' + keys.length + '</strong></span>' +
+      '<span>Last generated: <strong>' + lastUp + '</strong></span>';
+
+    if (keys.length === 0) {
+      document.getElementById('panels').innerHTML =
+        '<div class="no-data">No data yet. Run <code>python generate_dashboard.py</code> after the first monitor run.</div>';
+      return;
+    }
+
+    var tabsEl   = document.getElementById('tabs');
+    var panelsEl = document.getElementById('panels');
+
+    keys.forEach(function (key) {
+      var btn = document.createElement('button');
+      btn.className   = 'tab-btn';
+      btn.dataset.key = key;
+      btn.innerHTML   = fmtTabLabel(key);
+      btn.addEventListener('click', function () { activate(key); });
+      tabsEl.appendChild(btn);
+      panelsEl.insertAdjacentHTML('beforeend', buildPanel(key, data[key]));
+    });
+
+    activate(keys[0]);
+  })();
+
+})();
+</script>
+</body>
+</html>

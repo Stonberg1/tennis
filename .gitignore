@@ -1,0 +1,6 @@
+.env
+__pycache__/
+*.pyc
+data/price_history.json
+src/dashboard/data.js
+data/ticketmaster_state.json
