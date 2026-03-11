@@ -70,10 +70,10 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: main   # ensure we have the commit just pushed by run-monitor
+          ref: main
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v4
