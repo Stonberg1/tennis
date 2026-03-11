@@ -1,1 +1,44 @@
-[]
+[
+  {
+    "session_date": "2026-08-31",
+    "session_type": "night",
+    "platform": "tickpick",
+    "price": 120,
+    "checked_at": "2026-03-11T12:00:00+00:00"
+  },
+  {
+    "session_date": "2026-08-31",
+    "session_type": "night",
+    "platform": "seatgeek",
+    "price": 135,
+    "checked_at": "2026-03-11T12:00:00+00:00"
+  },
+  {
+    "session_date": "2026-08-31",
+    "session_type": "night",
+    "platform": "ticketmaster",
+    "price": 145,
+    "checked_at": "2026-03-11T12:00:00+00:00"
+  },
+  {
+    "session_date": "2026-09-01",
+    "session_type": "day",
+    "platform": "tickpick",
+    "price": 175,
+    "checked_at": "2026-03-11T12:00:00+00:00"
+  },
+  {
+    "session_date": "2026-09-01",
+    "session_type": "day",
+    "platform": "seatgeek",
+    "price": 190,
+    "checked_at": "2026-03-11T12:00:00+00:00"
+  },
+  {
+    "session_date": "2026-09-01",
+    "session_type": "day",
+    "platform": "ticketmaster",
+    "price": 210,
+    "checked_at": "2026-03-11T12:00:00+00:00"
+  }
+]
